@@ -1,0 +1,521 @@
+<title>سجل الهلال</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Reem+Kufi:wght@500;600;700&display=swap">
+<style>
+/* Layout: عمود واحد بعرض الهاتف يُقرأ كسجل مرصد: تاريخ اليوم من سجل الترائي، ثم شريط أيام الشهر، ثم مساء الترائي القادم، ثم تقارير الترائي مؤرخة، ثم المصادر وحالة التحقق منها. */
+:root{
+  --bg:#EEF2F6; --surface:#FFFFFF; --ink:#13213A; --muted:#566579; --line:#D5DDE7; --track:#E4EAF1;
+  --accent:#8F6008; --accent-ink:#FFFFFF; --accent-soft:#F6EDD8;
+  --seen:#2A7448; --cam:#2F5F99; --no:#7D899B;
+  --moon-lit:#F2E4BE; --moon-dark:#1D2B45; --halo:rgba(143,96,8,.10);
+  --f-display:"Reem Kufi","IBM Plex Sans Arabic","Geeza Pro","Noto Sans Arabic",sans-serif;
+  --f-body:"IBM Plex Sans Arabic","Geeza Pro","Noto Sans Arabic",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B1222; --surface:#121C30; --ink:#E6EBF3; --muted:#9AA7BC; --line:#25334D; --track:#1A263D;
+    --accent:#E3B14E; --accent-ink:#1A1405; --accent-soft:#2A2312;
+    --seen:#6DC290; --cam:#84AAE0; --no:#76849B;
+    --moon-lit:#F4E9CC; --moon-dark:#22304B; --halo:rgba(227,177,78,.12);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B1222; --surface:#121C30; --ink:#E6EBF3; --muted:#9AA7BC; --line:#25334D; --track:#1A263D;
+  --accent:#E3B14E; --accent-ink:#1A1405; --accent-soft:#2A2312;
+  --seen:#6DC290; --cam:#84AAE0; --no:#76849B;
+  --moon-lit:#F4E9CC; --moon-dark:#22304B; --halo:rgba(227,177,78,.12);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+p,h1,h2,ol,ul{margin:0}
+a{color:var(--accent);text-underline-offset:3px}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.num{font-variant-numeric:tabular-nums}
+
+.wrap{max-width:35rem;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px;display:flex;flex-direction:column;gap:14px}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:4px}
+.brand{display:flex;flex-direction:column;line-height:1.3}
+.brand h1{font-family:var(--f-display);font-weight:600;font-size:26px}
+.brand span{color:var(--muted);font-size:13px}
+.seg{display:inline-flex;background:var(--track);border-radius:999px;padding:3px;gap:2px}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font:500 14px/1 var(--f-body);padding:10px 16px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(10,20,40,.12)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px}
+.eyebrow{font-weight:500;font-size:13px;color:var(--muted)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:118px minmax(0,1fr);grid-template-areas:"moon date" "basis basis";gap:16px 18px;align-items:center}
+.moon-col{grid-area:moon;display:flex;flex-direction:column;align-items:center;gap:6px}
+.moon-col svg{width:112px;height:112px;max-width:100%;display:block}
+.moon-cap{font-size:12.5px;color:var(--muted);text-align:center;line-height:1.55}
+.moon-cap b{color:var(--ink);font-weight:600}
+.date-col{grid-area:date;min-width:0;display:flex;flex-direction:column;gap:0}
+.day{font-family:var(--f-display);font-weight:600;font-size:72px;line-height:1.05}
+.day.pending{font-size:40px;color:var(--muted)}
+.month{font-family:var(--f-display);font-weight:600;font-size:24px;color:var(--accent);line-height:1.4;text-wrap:balance}
+.greg{color:var(--muted);font-size:14px}
+.basis{grid-area:basis;border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:8px}
+.basis p{font-size:15px}
+.basis .note{font-size:14px;color:var(--muted)}
+
+/* pills */
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{display:inline-flex;align-items:center;gap:6px;font:500 12.5px/1.2 var(--f-body);padding:5px 10px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.p-eye{background:var(--seen);color:var(--surface)}
+.p-eye::before{background:var(--surface)}
+.p-optic{border-color:var(--seen);color:var(--seen)}
+.p-cam{border:1px dashed var(--cam);color:var(--cam)}
+.p-no{border-color:var(--line);color:var(--no)}
+.p-no::before{width:8px;height:1.5px;border-radius:0}
+.p-official{border-color:var(--accent);color:var(--accent)}
+.p-calc{border:1px dotted var(--no);color:var(--muted)}
+.p-done{background:var(--track);color:var(--ink)}
+.p-ok{border-color:var(--seen);color:var(--seen)}
+.p-part{border:1px dotted var(--accent);color:var(--accent)}
+
+/* section heads */
+.sec-head{display:flex;flex-direction:column;gap:2px;margin-bottom:14px}
+h2{font-family:var(--f-display);font-weight:600;font-size:21px;line-height:1.4;text-wrap:balance}
+.sec-sub{color:var(--muted);font-size:14px}
+
+/* track */
+.track{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px}
+.cell{position:relative;aspect-ratio:1;max-width:100%;display:grid;place-items:center;border-radius:9px;font-weight:500;font-size:14px;line-height:1;color:var(--muted);border:1px solid var(--line);font-variant-numeric:tabular-nums}
+.cell.past{background:var(--track);border-color:transparent}
+.cell.today{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.cell.eve::after{content:"";position:absolute;inset-block-start:4px;inset-inline-end:4px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.cell.today.eve::after{background:var(--accent-ink)}
+.cell.maybe{border-style:dashed}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:14px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.lg{width:12px;height:12px;border-radius:4px;display:inline-block;flex:none}
+.lg-today{background:var(--accent)}
+.lg-eve{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.lg-maybe{border:1px dashed var(--muted)}
+
+/* next sighting */
+.next{display:flex;flex-direction:column;gap:10px}
+.next-date{font-family:var(--f-display);font-weight:600;font-size:30px;line-height:1.3}
+.next-sub{color:var(--muted);font-size:14.5px}
+.outcomes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.oc{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.oc-k{font-weight:500;font-size:13px;color:var(--muted)}
+.oc-v{font-weight:600;font-size:17px}
+.oc-n{font-size:13.5px;color:var(--muted)}
+.small{font-size:13px;color:var(--muted)}
+
+/* log */
+.log{display:flex;flex-direction:column}
+.log .sec-head{padding-top:10px}
+#log{display:flex;flex-direction:column;gap:10px}
+details.m{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+details.m summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;flex-wrap:wrap}
+details.m summary::-webkit-details-marker{display:none}
+.m-name{font-family:var(--f-display);font-weight:600;font-size:19px;color:var(--ink)}
+.m-start{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px}
+.chev{width:9px;height:9px;border-left:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(-45deg);margin-inline-start:4px;margin-top:-4px;flex:none}
+details[open] .chev{transform:rotate(135deg);margin-top:4px}
+.m-body{border-top:1px solid var(--line);padding:14px 16px 16px;display:flex;flex-direction:column;gap:16px}
+.m-other{font-size:14px;color:var(--muted)}
+.m-other b{color:var(--ink);font-weight:600}
+.obs{list-style:none;padding:0;display:flex;flex-direction:column;gap:16px}
+.obs li{display:flex;flex-direction:column;gap:6px;min-width:0}
+.o-date{font-size:13px;color:var(--muted)}
+.o-place{font-weight:600;font-size:15px}
+.tag{font-weight:500;font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 7px;margin-inline-end:6px}
+.o-note{font-size:14.5px;color:var(--muted)}
+.m-src{font-size:13.5px;color:var(--muted)}
+
+/* sources */
+.srcs{list-style:none;padding:0;display:flex;flex-direction:column;gap:14px}
+.srcs li{display:flex;flex-direction:column;gap:4px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.srcs li:last-child{border-bottom:0;padding-bottom:0}
+.s-name{font-weight:600;font-size:15px}
+.s-what{font-size:14px;color:var(--muted)}
+.s-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-size:14px}
+.removed{font-size:14px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+
+/* footer */
+.foot{display:flex;flex-direction:column;gap:10px;padding-top:12px;font-size:14.5px;color:var(--muted)}
+.foot h2{font-size:18px;color:var(--ink)}
+.foot p{max-width:62ch}
+
+@media (max-width:360px){
+  .hero{grid-template-columns:1fr;grid-template-areas:"moon" "date" "basis"}
+  .moon-col{flex-direction:row;justify-content:flex-start}
+  .outcomes{grid-template-columns:1fr}
+}
+</style>
+
+<div class="wrap" lang="ar" dir="rtl">
+  <header class="top">
+    <div class="brand"><h1>سجل الهلال</h1><span>الإمارات والسعودية · عام ١٤٤٨ هـ</span></div>
+    <div class="seg" role="group" aria-label="الدولة">
+      <button id="btn-uae" type="button" data-c="uae" aria-pressed="true">الإمارات</button>
+      <button id="btn-ksa" type="button" data-c="ksa" aria-pressed="false">السعودية</button>
+    </div>
+  </header>
+
+  <section class="hero card" aria-labelledby="hero-label">
+    <div class="moon-col">
+      <svg id="moon" viewBox="0 0 140 140" role="img" aria-label="قمر الليلة"></svg>
+      <p class="moon-cap" id="moon-cap"></p>
+    </div>
+    <div class="date-col">
+      <p class="eyebrow" id="hero-label">اليوم في الإمارات</p>
+      <p class="day num" id="day">١٣</p>
+      <p class="month" id="month">جمادى الأولى ١٤٤٨ هـ</p>
+      <p class="greg" id="greg">السبت، ٢٤ أكتوبر ٢٠٢٦</p>
+    </div>
+    <div class="basis" id="basis"></div>
+  </section>
+
+  <section class="card" aria-labelledby="track-h">
+    <div class="sec-head">
+      <h2 id="track-h">أيام الشهر</h2>
+      <p class="sec-sub" id="track-sub"></p>
+    </div>
+    <div class="track" id="track"></div>
+    <p class="legend">
+      <span><i class="lg lg-today"></i>اليوم</span>
+      <span><i class="lg lg-eve"></i>مساء الترائي (يوم ٢٩)</span>
+      <span><i class="lg lg-maybe"></i>اليوم ٣٠، إن لم يُرَ الهلال</span>
+    </p>
+  </section>
+
+  <section class="card next" id="next" aria-label="مساء الترائي القادم"></section>
+
+  <section class="log" aria-labelledby="log-h">
+    <div class="sec-head">
+      <h2 id="log-h">سجل الترائي لعام ١٤٤٨ هـ</h2>
+      <p class="sec-sub">الأحدث أولاً. افتح الشهر لعرض تقاريره.</p>
+    </div>
+    <div id="log"></div>
+  </section>
+
+  <section class="card" aria-labelledby="src-h">
+    <div class="sec-head">
+      <h2 id="src-h">المصادر والتحقق منها</h2>
+      <p class="sec-sub">فُتح كل مصدر وقُرئ نصه يوم السبت ٢٤ أكتوبر ٢٠٢٦، إلا ما ذُكر خلاف ذلك.</p>
+    </div>
+    <ul class="srcs" id="srcs"></ul>
+    <p class="removed">حُذف من السجل ما لم يمكن التحقق منه من مصدر رسمي أو من مرصد، ومن ذلك نص قرار دائرة الأهلة بالمحكمة العليا لشهر جمادى الأولى، لأنه متداول فقط في منشور لحساب شخصي على منصة X.</p>
+  </section>
+
+  <footer class="foot">
+    <h2>كيف يُحدَّد التاريخ</h2>
+    <p>يبدأ كل شهر في اليوم الذي أعلنته الجهة الرسمية، إما بعد ترائي الهلال مساء التاسع والعشرين، وإما بعد إتمام الشهر ثلاثين يوماً. ويُعدّ تاريخ اليوم من تلك الغرة فقط.</p>
+    <p>صورة القمر ونسبة إضاءته محسوبتان من مدار القمر، وهما واحدتان للجميع. تُعرضان للاطلاع فقط، ولا تُستخدمان أبداً في تحديد التاريخ.</p>
+    <p>التواريخ حسب اليوم المدني المعتمد في التقاويم الرسمية. أما اليوم الهجري فيبدأ عند المغرب، فليلة كل يوم تسبق نهاره.</p>
+    <p>طريقة الرصد: <span class="pill p-eye">بالعين المجردة</span> <span class="pill p-optic">بالمنظار أو التلسكوب</span> <span class="pill p-cam">بالتصوير</span> <span class="pill p-no">لم يُرَ</span></p>
+    <p class="small">آخر تحديث للسجل وللتحقق من المصادر: السبت ٢٤ أكتوبر ٢٠٢٦.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var DAY = 864e5;
+  var LOC = "ar-u-ca-gregory-nu-arab";
+  var TZ = { uae:"Asia/Dubai", ksa:"Asia/Riyadh" };
+  var CNAME = { uae:"الإمارات", ksa:"السعودية" };
+  var NAMES = ["محرم","صفر","ربيع الأول","ربيع الآخر","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
+
+  var ICOP = "https://astronomycenter.net/icop/";
+  var S = {
+    icop:{ name:"المشروع الإسلامي لرصد الأهلة", url:"https://astronomycenter.net/res.html" },
+    spa:{ name:"واس: بيان المحكمة العليا", url:"https://www.spa.gov.sa/N2613175" },
+    ey:{ name:"الإمارات اليوم: مجلس الإفتاء", url:"https://www.emaratalyoum.com/local-section/other/2026-09-11-1.2081916" },
+    masar:{ name:"المسار: الأوقاف العُمانية", url:"https://almasar.om/%D8%AB%D8%A8%D9%88%D8%AA-%D8%B1%D8%A4%D9%8A%D8%A9-%D9%87%D9%84%D8%A7%D9%84-%D8%B4%D9%87%D8%B1-%D8%AC%D9%85%D8%A7%D8%AF%D9%89-%D8%A7%D9%84%D8%A3%D9%88%D9%84%D9%89-%D9%84%D8%B9%D8%A7%D9%85-1448%D9%87/" },
+    gn:{ name:"غلف نيوز (بالإنجليزية)", url:"https://gulfnews.com/uae/jumada-al-awwal-crescent-photographed-over-dubai-before-sunset-1.500706648" }
+  };
+
+  /* سجل الترائي لعام ١٤٤٨ هـ. idx = رقم الشهر - ١ */
+  var MONTHS = [
+    { idx:0, year:1448, conj:"2026-06-15T02:54:00Z",
+      start:{ uae:"2026-06-16", ksa:"2026-06-16" },
+      basis:{
+        uae:{ k:"cam", label:"صُوِّر بالكاميرا", text:"صُوِّر الهلال بالكاميرا فوق أبوظبي ودبي مساء الاثنين ١٥ يونيو." },
+        ksa:{ k:"official", label:"المحكمة العليا", text:"أعلنت المحكمة العليا ثبوت رؤية الهلال مساء الاثنين ١٥ يونيو (القرار رقم ٢٠٨/هـ)." } },
+      obs:[
+        { d:"2026-06-15", tag:"الإمارات", place:"أبوظبي · مرصد الختم الفلكي", m:[["cam","بالتصوير"]], note:"صُوِّر الهلال قبل غروب الشمس وبعده، ولم يُتحرَّ بالعين المجردة." },
+        { d:"2026-06-15", tag:"الإمارات", place:"دبي · جبل نزوى", m:[["cam","بالتصوير"],["no","لم يُرَ بالمنظار"],["no","لم يُرَ بالتلسكوب"]], note:"صُوِّر الساعة ٧:٣٦ مساءً بتكديس ٢٠ صورة، ولم يُرَ بالمنظار ولا بالتلسكوب." },
+        { d:"2026-06-15", tag:"السعودية", place:"مهد الذهب · السويرقية", m:[["cam","بالتصوير"]], note:"صُوِّر قبل غروب الشمس." },
+        { d:"2026-06-15", tag:"السعودية", place:"المحكمة العليا", m:[["official","إعلان رسمي"]], note:"أعلنت ثبوت رؤية الهلال (القرار رقم ٢٠٨/هـ)، وأن الثلاثاء ١٦ يونيو غرة محرم." } ],
+      src:[["icop","muh48.html"],["spa"]] },
+
+    { idx:1, year:1448, conj:"2026-07-14T09:43:00Z",
+      start:{ uae:"2026-07-16", ksa:"2026-07-15" },
+      basis:{
+        uae:{ k:"eye", label:"رُئي بالعين", text:"رُئي الهلال بالعين المجردة فوق دبي مساء الأربعاء ١٥ يوليو." },
+        ksa:{ k:"calc", label:"التاريخ الرسمي", text:"هذا هو التاريخ الرسمي المسجَّل، ولم يُبلَّغ عن رؤية الهلال في أي مكان مساء الثلاثاء ١٤ يوليو." } },
+      obs:[
+        { d:"2026-07-14", tag:"المشروع", place:"راصدون في ١٠ دول", m:[["no","لم يُرَ"]], note:"لم يُبلِّغ أي راصد في المشروع الإسلامي لرصد الأهلة عن رؤية الهلال في أي مكان هذا المساء." },
+        { d:"2026-07-15", tag:"الإمارات", place:"دبي", m:[["eye","بالعين المجردة"],["optic","بالمنظار"],["optic","بالتلسكوب"],["cam","بالتصوير"]], note:"رُئي بالعين المجردة الساعة ٧:٣٢ مساءً، بعد الغروب بـ٢٢ دقيقة، واستمرت رؤيته حتى ٧:٥٤ مساءً." },
+        { d:"2026-07-15", tag:"السعودية", place:"جدة", m:[["eye","بالعين المجردة"]], note:"رُئي بعد الغروب، وكانت هذه في السعودية أول ليلة من صفر." } ],
+      src:[["icop","saf48.html"]] },
+
+    { idx:2, year:1448, conj:"2026-08-12T17:37:00Z",
+      start:{ uae:"2026-08-14", ksa:"2026-08-14" },
+      basis:{
+        uae:{ k:"cam", label:"صُوِّر بالكاميرا", text:"صُوِّر الهلال بالكاميرا فوق أبوظبي مساء الخميس ١٣ أغسطس." },
+        ksa:{ k:"done", label:"إتمام ٣٠ يوماً", text:"أتمّ صفر ثلاثين يوماً، إذ وقع الاقتران بعد غروب الشمس يوم ٢٩ منه." } },
+      obs:[
+        { d:"2026-08-12", tag:"السعودية", place:"٢٩ صفر في السعودية", m:[["no","لا هلال"]], note:"وقع الاقتران الساعة ٨:٣٧ مساءً بتوقيت السعودية، بعد غروب الشمس، فلم يوجد هلال تلك الليلة." },
+        { d:"2026-08-13", tag:"الإمارات", place:"أبوظبي · مرصد الختم الفلكي", m:[["cam","بالتصوير"]], note:"صُوِّر قبل الغروب وبعده، ولم يُتحرَّ بالعين المجردة." } ],
+      src:[["icop","raa48.html"]] },
+
+    { idx:3, year:1448, conj:"2026-09-11T03:27:00Z",
+      start:{ uae:"2026-09-13", ksa:"2026-09-12" },
+      basis:{
+        uae:{ k:"done", label:"إتمام ٣٠ يوماً", text:"أعلن مجلس الإمارات للإفتاء الشرعي إتمام ربيع الأول ثلاثين يوماً." },
+        ksa:{ k:"calc", label:"تقويم أم القرى", text:"حسب تقويم أم القرى. لم نجد إعلاناً رسمياً عن ترائي الهلال لهذا الشهر." } },
+      obs:[
+        { d:"2026-09-11", tag:"الإمارات", place:"مجلس الإمارات للإفتاء الشرعي", m:[["official","إعلان رسمي"]], note:"أعلن، بعد دراسة المعطيات العلمية بالتنسيق مع المراكز العلمية المتخصصة في الدولة، أن السبت ١٢ سبتمبر متمم لربيع الأول، وأن الأحد ١٣ سبتمبر غرة ربيع الآخر." },
+        { d:"2026-09-12", tag:"السعودية", place:"تقويم أم القرى", m:[["calc","تقويم"]], note:"لم نجد إعلاناً رسمياً عن الترائي. ويوافق ١٢ سبتمبر غرة ربيع الآخر في تقويم أم القرى، كما ورد في تقرير راصد جدة على صفحة المشروع لشهر جمادى الأولى." },
+        { d:"2026-09-11", tag:"المشروع", place:"صفحة نتائج هذا الشهر", m:[["calc","لا تقارير"]], note:"لم ينشر المشروع الإسلامي لرصد الأهلة نتائج رصد ولا بداية رسمية لهذا الشهر حتى الآن." } ],
+      src:[["ey"],["icop","rat48.html"]] },
+
+    { idx:4, year:1448, conj:"2026-10-10T15:50:00Z",
+      start:{ uae:"2026-10-12", ksa:"2026-10-12" },
+      basis:{
+        uae:{ k:"cam", label:"صُوِّر بالكاميرا", text:"صُوِّر الهلال بالكاميرا فوق أبوظبي ودبي مساء الأحد ١١ أكتوبر." },
+        ksa:{ k:"done", label:"إتمام ٣٠ يوماً", text:"أتمّ ربيع الآخر ثلاثين يوماً، إذ وقع الاقتران بعد غروب الشمس يوم ٢٩ منه (السبت ١٠ أكتوبر)." } },
+      obs:[
+        { d:"2026-10-10", tag:"السعودية", place:"٢٩ ربيع الآخر حسب تقويم أم القرى", m:[["no","لا هلال"]], note:"وقع الاقتران الساعة ٦:٥٠ مساءً بتوقيت السعودية، بعد غروب الشمس، فلم يوجد هلال تلك الليلة. وسجّل المشروع أن السعودية بدأت جمادى الأولى يوم الاثنين ١٢ أكتوبر." },
+        { d:"2026-10-11", tag:"الإمارات", place:"أبوظبي · مرصد الختم الفلكي", m:[["cam","بالتصوير"]], note:"صُوِّر قبل غروب الشمس، ولم يُتحرَّ بالعين المجردة." },
+        { d:"2026-10-11", tag:"الإمارات", place:"دبي · مركز الفلك الدولي", m:[["cam","بالتصوير"]], note:"صُوِّر الساعة ٥:٤٥ مساءً في ضوء النهار. كان عمر القمر نحو ٢١ ساعة، وبُعده عن الشمس ١١٫٥ درجة." },
+        { d:"2026-10-11", tag:"السعودية", place:"جدة", m:[["no","لم يُرَ بالعين"]], note:"لم يُرَ بالعين المجردة بعد الغروب رغم صفاء السماء." },
+        { d:"2026-10-11", tag:"عُمان", place:"وزارة الأوقاف والشؤون الدينية", m:[["official","إعلان رسمي"]], note:"أعلنت ثبوت رؤية الهلال، وأن الاثنين ١٢ أكتوبر غرة جمادى الأولى." },
+        { d:"2026-10-12", tag:"السعودية", place:"جدة", m:[["eye","بالعين المجردة"]], note:"رُئي من خلال فجوات في الغيوم من ٦:٢٩ إلى ٦:٣٢ مساءً، في أول ليلة من الشهر." } ],
+      src:[["icop","jua48.html"],["gn"],["masar"]] },
+
+    { idx:5, year:1448, conj:"2026-11-09T07:02:00Z", start:null, src:[["icop","jut48.html"]] }
+  ];
+
+  var SOURCES = [
+    { name:"المشروع الإسلامي لرصد الأهلة", who:"مركز الفلك الدولي، أبوظبي", what:"صفحات نتائج الرصد لأشهر محرم إلى جمادى الآخرة ١٤٤٨، وفيها تقارير الراصدين والبداية الرسمية لكل دولة وأوقات الاقتران.", ok:true, url:"https://astronomycenter.net/res.html" },
+    { name:"وكالة الأنباء السعودية (واس)", who:"جهة رسمية", what:"بيان المحكمة العليا بثبوت رؤية هلال محرم ١٤٤٨ (القرار رقم ٢٠٨/هـ).", ok:true, url:S.spa.url },
+    { name:"صحيفة الإمارات اليوم", who:"صحيفة إماراتية", what:"إعلان مجلس الإمارات للإفتاء الشرعي إتمام ربيع الأول وغرة ربيع الآخر ١٤٤٨.", ok:true, url:S.ey.url },
+    { name:"صحيفة المسار العُمانية", who:"صحيفة عُمانية", what:"نص إعلان وزارة الأوقاف والشؤون الدينية في عُمان ثبوت رؤية هلال جمادى الأولى ١٤٤٨.", ok:true, url:S.masar.url },
+    { name:"غلف نيوز", who:"صحيفة إماراتية (بالإنجليزية)", what:"خبر تصوير مركز الفلك الدولي هلال جمادى الأولى فوق دبي مساء ١١ أكتوبر ٢٠٢٦.", ok:true, url:S.gn.url },
+    { name:"وكالة الأنباء العُمانية", who:"جهة رسمية", what:"الإعلان نفسه عن هلال جمادى الأولى. ظهر نصه في نتائج البحث، لكن الموقع يمنع الفتح الآلي فلم يُفتح.", ok:false, url:"https://www.omannews.gov.om/topics/ar/3/show/474894" },
+    { name:"وزارة العدل السعودية", who:"جهة رسمية", what:"صفحة قرارات دائرة الأهلة. فُتحت ولم تُعرض فيها القرارات عند التحقق، وتحمل تاريخ آخر تعديل ٢ جمادى الأولى ١٤٤٨.", ok:false, url:"https://www.moj.gov.sa/ar/MediaCenter/News/Pages/SupremeCourtNews.aspx" }
+  ];
+
+  /* ---------- أدوات التاريخ ---------- */
+  function todayIn(tz){
+    var parts = new Intl.DateTimeFormat("en-US",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());
+    var o = {}; parts.forEach(function(p){ o[p.type]=p.value; });
+    return o.year+"-"+o.month+"-"+o.day;
+  }
+  function ms(s){ var a = s.split("-").map(Number); return Date.UTC(a[0],a[1]-1,a[2]); }
+  function isoOf(t){ return new Date(t).toISOString().slice(0,10); }
+  function addDays(s,n){ return isoOf(ms(s)+n*DAY); }
+  function diffDays(a,b){ return Math.round((ms(b)-ms(a))/DAY); }
+  function fmt(s,opts){ return new Date(ms(s)).toLocaleDateString(LOC,Object.assign({timeZone:"UTC"},opts)); }
+  function short(s){ return fmt(s,{weekday:"long",day:"numeric",month:"long"}); }
+  function long(s){ return fmt(s,{weekday:"long",day:"numeric",month:"long",year:"numeric"}); }
+  function ar(x){ return String(x).replace(/\d/g,function(d){ return "٠١٢٣٤٥٦٧٨٩"[d]; }); }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+  function mname(i){ return NAMES[i % 12]; }
+  function days(n){ return n===1?"يوم واحد":n===2?"يومان":n<=10?ar(n)+" أيام":ar(n)+" يوماً"; }
+  function hours(n){ return n===1?"ساعة":n===2?"ساعتان":n<=10?ar(n)+" ساعات":ar(n)+" ساعة"; }
+
+  /* ---------- القمر (ميوس، الفصل ٤٨، دقة منخفضة) ---------- */
+  function moonState(date){
+    var rad = Math.PI/180;
+    var jd = date.getTime()/DAY + 2440587.5;
+    var T = (jd-2451545)/36525;
+    function n(x){ x = x % 360; return x<0 ? x+360 : x; }
+    var D  = n(297.8501921 + 445267.1114034*T - 0.0018819*T*T + T*T*T/545868 - T*T*T*T/113065000);
+    var M  = n(357.5291092 + 35999.0502909*T - 0.0001536*T*T + T*T*T/24490000);
+    var Mp = n(134.9633964 + 477198.8675055*T + 0.0087414*T*T + T*T*T/69699 - T*T*T*T/14712000);
+    var i = 180 - D - 6.289*Math.sin(Mp*rad) + 2.100*Math.sin(M*rad) - 1.274*Math.sin((2*D-Mp)*rad)
+            - 0.658*Math.sin(2*D*rad) - 0.214*Math.sin(2*Mp*rad) - 0.110*Math.sin(D*rad);
+    return { k:(1 + Math.cos(i*rad))/2, waxing: D < 180 };
+  }
+  function phaseName(k,waxing){
+    if (k < 0.03) return "محاق";
+    if (k > 0.97) return "بدر";
+    if (k > 0.47 && k < 0.53) return waxing ? "تربيع أول" : "تربيع أخير";
+    return (k < 0.5 ? "هلال " : "أحدب ") + (waxing ? "متزايد" : "متناقص");
+  }
+  function drawMoon(k,waxing){
+    var cx=70, cy=70, R=52;
+    var rx = R*Math.abs(1-2*k), sweep = k>0.5 ? 1 : 0;
+    var lit = "M "+cx+" "+(cy-R)+" A "+R+" "+R+" 0 0 1 "+cx+" "+(cy+R)+" A "+rx.toFixed(2)+" "+R+" 0 0 "+sweep+" "+cx+" "+(cy-R)+" Z";
+    var flip = waxing ? "" : ' transform="translate(140,0) scale(-1,1)"';
+    document.getElementById("moon").innerHTML =
+      '<circle cx="70" cy="70" r="66" style="fill:var(--halo)"/>' +
+      '<circle cx="70" cy="70" r="'+R+'" style="fill:var(--moon-dark)"/>' +
+      '<path d="'+lit+'"'+flip+' style="fill:var(--moon-lit)"/>' +
+      '<circle cx="70" cy="70" r="'+R+'" style="fill:none;stroke:var(--line);stroke-width:1"/>';
+  }
+
+  /* ---------- الحالة ---------- */
+  var country = "uae";
+  try { var saved = localStorage.getItem("hilal-country"); if (saved==="uae"||saved==="ksa") country = saved; } catch(e){}
+
+  function currentMonth(c, today){
+    var cur = null, next = null;
+    MONTHS.forEach(function(m){ if (m.start && m.start[c] && ms(m.start[c]) <= ms(today)) cur = m; });
+    if (cur) MONTHS.forEach(function(m){ if (m.idx === cur.idx+1) next = m; });
+    return { cur:cur, next:next };
+  }
+  function pill(kind,label){ return '<span class="pill p-'+kind+'">'+esc(label)+'</span>'; }
+  function srcLink(s){
+    var o = S[s[0]], url = s[0]==="icop" ? ICOP + s[1] : o.url;
+    return '<a href="'+url+'" target="_blank" rel="noopener">'+esc(o.name)+'</a>';
+  }
+
+  function render(){
+    var c = country, tz = TZ[c];
+    var today = todayIn(tz);
+    var st = currentMonth(c, today), cur = st.cur, next = st.next;
+
+    document.getElementById("btn-uae").setAttribute("aria-pressed", c==="uae");
+    document.getElementById("btn-ksa").setAttribute("aria-pressed", c==="ksa");
+    document.getElementById("hero-label").textContent = "اليوم في " + CNAME[c];
+    document.getElementById("greg").textContent = long(today);
+
+    /* القمر */
+    var now = new Date(), mo = moonState(now), pct = ar(Math.round(mo.k*100)) + "٪";
+    drawMoon(mo.k, mo.waxing);
+    var age = "";
+    for (var i=MONTHS.length-1;i>=0;i--){
+      var t = Date.parse(MONTHS[i].conj);
+      if (t <= now.getTime()){
+        var h = (now.getTime()-t)/36e5, dd = Math.floor(h/24), hh = Math.floor(h%24);
+        if (h < 30*24) age = "مضى " + days(dd) + (hh ? " و" + hours(hh) : "") + " على الاقتران";
+        break;
+      }
+    }
+    document.getElementById("moon-cap").innerHTML = "<b>مضاء "+pct+"</b><br>"+phaseName(mo.k,mo.waxing)+(age?"<br>"+age:"");
+    document.getElementById("moon").setAttribute("aria-label","قمر الليلة: "+phaseName(mo.k,mo.waxing)+"، مضاء "+pct);
+
+    var dayEl = document.getElementById("day"), monthEl = document.getElementById("month"), basisEl = document.getElementById("basis");
+
+    if (!cur){
+      dayEl.textContent = "—"; dayEl.className = "day pending";
+      monthEl.textContent = "خارج هذا السجل";
+      basisEl.innerHTML = "<p>يبدأ هذا السجل بشهر محرم ١٤٤٨ هـ (١٦ يونيو ٢٠٢٦).</p>";
+      document.getElementById("track").innerHTML = "";
+      document.getElementById("next").hidden = true;
+      renderLog(c, null);
+      return;
+    }
+
+    var start = cur.start[c];
+    var day = diffDays(start, today) + 1;
+    var known = next && next.start && next.start[c] ? diffDays(start, next.start[c]) : null;
+    var nameCur = mname(cur.idx), nameNext = mname(cur.idx+1);
+    var b = cur.basis[c];
+
+    if (!known && day > 30){
+      dayEl.textContent = "—"; dayEl.className = "day pending";
+      monthEl.textContent = "بدأ شهر " + nameNext + " " + ar(cur.year) + " هـ";
+      basisEl.innerHTML = "<p>لم تُضَف نتيجة ترائي هلال "+esc(nameNext)+" إلى هذا السجل بعد.</p>" +
+        '<p class="note">راجع <a href="'+ICOP+next.src[0][1]+'" target="_blank" rel="noopener">صفحة المشروع لشهر '+esc(nameNext)+'</a> لمعرفة البداية الرسمية.</p>';
+    } else {
+      dayEl.textContent = ar(day); dayEl.className = "day num";
+      monthEl.textContent = nameCur + " " + ar(cur.year) + " هـ";
+      var html = '<div class="pills">'+pill(b.k,b.label)+'</div><p>بدأ الشهر يوم '+esc(long(start))+'. '+esc(b.text)+'</p>';
+      if (!known && day === 30) html += '<p class="note">إن رُئي الهلال مساء أمس فاليوم غرة '+esc(nameNext)+'. لم تُضَف هذه النتيجة إلى السجل بعد.</p>';
+      basisEl.innerHTML = html;
+    }
+
+    /* شريط الأيام */
+    var len = known || 30, cells = "";
+    for (var n=1; n<=len; n++){
+      var cls = "cell";
+      if (n < day) cls += " past";
+      if (n === day) cls += " today";
+      if (n === 29) cls += " eve";
+      if (n === 30 && !known) cls += " maybe";
+      cells += '<div class="'+cls+'"'+(n===day?' aria-current="date"':'')+'>'+ar(n)+'</div>';
+    }
+    document.getElementById("track").innerHTML = cells;
+    document.getElementById("track-sub").textContent = nameCur + ": اليوم " + ar(Math.min(day,len)) + " من " + (known ? ar(known) : "٢٩ أو ٣٠") + " يوماً في " + CNAME[c] + ".";
+
+    /* مساء الترائي القادم */
+    var nextEl = document.getElementById("next");
+    if (known){ nextEl.hidden = true; }
+    else {
+      nextEl.hidden = false;
+      var eve = addDays(start, 28), until = diffDays(today, eve);
+      var when = until > 2 ? "بعد " + days(until) : until === 2 ? "بعد يومين" : until === 1 ? "غداً" : until === 0 ? "الليلة" : "بانتظار النتيجة";
+      var conjLine = "";
+      if (next && next.conj){
+        var cs = new Date(next.conj).toLocaleString(LOC,{timeZone:tz,weekday:"long",day:"numeric",month:"long",hour:"numeric",minute:"2-digit",hour12:true});
+        conjLine = '<p class="small">الاقتران (المحاق): '+esc(cs)+' بتوقيت '+CNAME[c]+'، حسب المشروع الإسلامي لرصد الأهلة.</p>';
+      }
+      nextEl.innerHTML =
+        '<p class="eyebrow">مساء الترائي القادم</p>' +
+        '<p class="next-date">'+esc(short(eve))+'</p>' +
+        '<p class="next-sub">بعد المغرب · ٢٩ '+esc(nameCur)+' · '+esc(when)+'</p>' +
+        '<div class="outcomes">' +
+          '<div class="oc"><span class="oc-k">إن رُئي الهلال</span><span class="oc-v">'+esc(short(addDays(start,29)))+'</span><span class="oc-n">غرة '+esc(nameNext)+'</span></div>' +
+          '<div class="oc"><span class="oc-k">إن لم يُرَ</span><span class="oc-v">'+esc(short(addDays(start,30)))+'</span><span class="oc-n">غرة '+esc(nameNext)+' بعد إتمام ٣٠ يوماً</span></div>' +
+        '</div>' + conjLine;
+    }
+
+    renderLog(c, cur);
+  }
+
+  function renderLog(c, cur){
+    var other = c === "uae" ? "ksa" : "uae", html = "";
+    for (var i=MONTHS.length-1;i>=0;i--){
+      var m = MONTHS[i];
+      if (!m.start) continue;
+      var b = m.basis[c], ob = m.basis[other];
+      var open = cur && cur.idx === m.idx ? " open" : "";
+      var obs = m.obs.map(function(o){
+        return '<li><span class="o-date">'+esc(short(o.d))+'</span>' +
+          '<p class="o-place"><span class="tag">'+esc(o.tag)+'</span>'+esc(o.place)+'</p>' +
+          '<div class="pills">'+o.m.map(function(x){ return pill(x[0],x[1]); }).join("")+'</div>' +
+          '<p class="o-note">'+esc(o.note)+'</p></li>';
+      }).join("");
+      html += '<details class="m"'+open+'><summary>' +
+        '<span class="m-name">'+esc(mname(m.idx))+'</span>' +
+        '<span class="m-start"><span>الغرة: '+esc(short(m.start[c]))+'</span>'+pill(b.k,b.label)+'<i class="chev" aria-hidden="true"></i></span>' +
+        '</summary><div class="m-body">' +
+        '<p class="m-other">'+CNAME[other]+': الغرة <b>'+esc(short(m.start[other]))+'</b> · '+esc(ob.label)+'</p>' +
+        '<ol class="obs">'+obs+'</ol>' +
+        '<p class="m-src">المصادر: '+m.src.map(srcLink).join(" · ")+'</p>' +
+        '</div></details>';
+    }
+    document.getElementById("log").innerHTML = html;
+  }
+
+  function renderSources(){
+    document.getElementById("srcs").innerHTML = SOURCES.map(function(s){
+      return '<li><span class="s-name">'+esc(s.name)+'</span>' +
+        '<span class="s-what">'+esc(s.who)+'. '+esc(s.what)+'</span>' +
+        '<span class="s-row">'+(s.ok ? pill("ok","فُتح وتُحقِّق من نصه") : pill("part","تحقق جزئي"))+
+        '<a href="'+s.url+'" target="_blank" rel="noopener">فتح المصدر</a></span></li>';
+    }).join("");
+  }
+
+  document.querySelectorAll(".seg button").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      country = btn.getAttribute("data-c");
+      try { localStorage.setItem("hilal-country", country); } catch(e){}
+      render();
+    });
+  });
+
+  renderSources();
+  render();
+  setInterval(render, 60000);
+})();
+</script>
